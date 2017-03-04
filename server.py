@@ -22,7 +22,7 @@
 
 
 import flask
-from flask import Flask, request
+from flask import Flask, request, url_for, redirect
 import json
 app = Flask(__name__)
 app.debug = True
@@ -55,7 +55,7 @@ class World:
         return self.space
 
 # you can test your webservice from the commandline
-# curl -v   -H "Content-Type: appication/json" -X PUT http://127.0.0.1:5000/entity/X -d '{"x":1,"y":1}' 
+# curl -v   -H "Content-Type: application/json" -X PUT http://127.0.0.1:5000/entity/X -d '{"x":1,"y":1}' 
 
 myWorld = World()          
 
@@ -74,27 +74,38 @@ def flask_post_json():
 @app.route("/")
 def hello():
     '''Return something coherent here.. perhaps redirect to /static/index.html '''
-    return None
+    #http://flask.pocoo.org/docs/0.12/quickstart/#static-files
+    return redirect(url_for('static', filename='index.html'))
 
+#Written by Ryan Satybrata under Apache license, taken from https://github.com/kobitoko/CMPUT404-assignment-ajax/blob/master/server.py on March 3, 2017
 @app.route("/entity/<entity>", methods=['POST','PUT'])
 def update(entity):
     '''update the entities via this interface'''
-    return None
+    if request.method=='PUT':
+        world_update=flask_post_json()
+        for key in world_update:
+            myWorld.update(entity, key, world_update[key])
+    elif request.method == 'POST':
+        myWorld.set(entity, flask_post_json())
+    return json.dumps(myWorld.get(entity))
 
 @app.route("/world", methods=['POST','GET'])    
 def world():
     '''you should probably return the world here'''
-    return None
+    #Return world as json string
+    return json.dumps(myWorld.world())
 
 @app.route("/entity/<entity>")    
 def get_entity(entity):
     '''This is the GET version of the entity interface, return a representation of the entity'''
-    return None
+    return json.dumps(myWorld.get(entitiy))
 
 @app.route("/clear", methods=['POST','GET'])
 def clear():
     '''Clear the world out!'''
-    return None
+    #Clear world then return as json string
+    myWorld.clear();
+    return json.dumps(myWorld.world())
 
 if __name__ == "__main__":
     app.run()
